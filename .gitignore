@@ -1,0 +1,11 @@
+# secrets & runtime state — never commit
+.env
+secrets/
+state/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
