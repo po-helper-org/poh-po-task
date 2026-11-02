@@ -15,7 +15,7 @@
 - HMAC compare uses `hmac.compare_digest` (constant-time). Never `==`.
 - Secrets (`.env`, `secrets/`, `state/`) are gitignored — never committed.
 - State row is written only AFTER the Google API call succeeds (retry-safe).
-- Idempotency key: `f"{repo}#{issue_number}"`, e.g. `kibarik/mts-po-workspace#42`.
+- Idempotency key: `f"{repo}#{issue_number}"`, e.g. `<owner>/<private-workspace>#42`.
 - All code and comments in English.
 
 ---
@@ -98,13 +98,13 @@ def test_config_loads_fields_and_secret_properties(tmp_path):
     sec = _write_secrets(tmp_path)
     cfg = Config(
         github_webhook_secret="whsec",
-        github_repo="kibarik/mts-po-workspace",
+        github_repo="<owner>/<private-workspace>",
         state_dir=tmp_path / "state",
         secrets_dir=sec,
     )
     assert cfg.po_label == "po-task"          # default
     assert cfg.google_tasklist == "PO"        # default
-    assert cfg.github_repo == "kibarik/mts-po-workspace"
+    assert cfg.github_repo == "<owner>/<private-workspace>"
     assert cfg.google_client_id == "cid-123"  # stripped
     assert cfg.google_client_secret == "csec-456"
     assert cfg.token_path == (tmp_path / "state") / "google_tasks.token"
@@ -162,7 +162,7 @@ Expected: PASS
 ```
 GITHUB_WEBHOOK_SECRET=change-me
 GITHUB_TOKEN=
-GITHUB_REPO=kibarik/mts-po-workspace
+GITHUB_REPO=<owner>/<private-workspace>
 PO_LABEL=po-task
 GOOGLE_TASKLIST=PO
 PORT=8080
@@ -624,13 +624,13 @@ def _payload(action, *, label="po-task", with_milestone=False):
         "number": 42,
         "title": "Do the thing",
         "body": "details here",
-        "html_url": "https://github.com/kibarik/mts-po-workspace/issues/42",
+        "html_url": "https://github.com/<owner>/<private-workspace>/issues/42",
         "milestone": {"due_on": "2026-07-20T07:00:00Z"} if with_milestone else None,
     }
     return {
         "action": action,
         "issue": issue,
-        "repository": {"full_name": "kibarik/mts-po-workspace"},
+        "repository": {"full_name": "<owner>/<private-workspace>"},
         "label": {"name": label},
     }
 
@@ -646,10 +646,10 @@ def test_labeled_creates_task_with_mapped_fields(bridge):
     assert len(created) == 1
     assert created[0]["title"] == "Do the thing"
     assert created[0]["notes"] == (
-        "details here\n\nhttps://github.com/kibarik/mts-po-workspace/issues/42"
+        "details here\n\nhttps://github.com/<owner>/<private-workspace>/issues/42"
     )
     assert created[0]["due"] == "2026-07-20T00:00:00.000Z"
-    assert bridge._state.get("kibarik/mts-po-workspace#42")["task_id"] == "task-1"
+    assert bridge._state.get("<owner>/<private-workspace>#42")["task_id"] == "task-1"
 
 
 def test_labeled_without_milestone_has_no_due(bridge):
@@ -672,7 +672,7 @@ def test_closed_completes_existing_task(bridge):
     bridge.handle("labeled", _payload("labeled"))
     bridge.handle("closed", _payload("closed"))
     assert bridge._gtasks.completed == [{"list_id": "L1", "task_id": "task-1"}]
-    assert bridge._state.get("kibarik/mts-po-workspace#42")["status"] == "completed"
+    assert bridge._state.get("<owner>/<private-workspace>#42")["status"] == "completed"
 
 
 def test_unlabeled_completes_existing_task(bridge):
@@ -1089,7 +1089,7 @@ Standalone service — independent of poh-scheduller. See the design in
    ```bash
    docker compose up -d
    ```
-5. **GitHub webhook** — in `mts-po-workspace` → Settings → Webhooks → Add webhook:
+5. **GitHub webhook** — in `<private-workspace>` (the private PO workspace repo) → Settings → Webhooks → Add webhook:
    - Payload URL: your reverse-proxy HTTPS URL → `/webhook`
    - Content type: `application/json`
    - Secret: same as `GITHUB_WEBHOOK_SECRET`

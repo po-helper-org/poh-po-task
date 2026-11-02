@@ -98,7 +98,7 @@ DB file lives in the mounted volume (`state/bridge.db`).
 ```
 GITHUB_WEBHOOK_SECRET=...     # HMAC verification (required)
 GITHUB_TOKEN=...              # read-only PAT for milestone fallback
-GITHUB_REPO=kibarik/mts-po-workspace
+GITHUB_REPO=<owner>/<private-workspace>
 PO_LABEL=po-task
 GOOGLE_TASKLIST=PO            # list name; created if absent
 PORT=8080
@@ -135,7 +135,7 @@ secrets/google_client_secret
    `state/google_tasks.token`.
 3. `docker compose up -d`.
 4. Register the GitHub webhook (URL from reverse-proxy, content-type `application/json`,
-   secret = `GITHUB_WEBHOOK_SECRET`, events = Issues) on `mts-po-workspace`.
+   secret = `GITHUB_WEBHOOK_SECRET`, events = Issues) on `<private-workspace>` (the private PO workspace repo).
 
 ## 11. Testing
 
